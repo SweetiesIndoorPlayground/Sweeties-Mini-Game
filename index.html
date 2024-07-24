@@ -26,11 +26,26 @@
             height: auto;
             display: block;
         }
+        #playerNameInput {
+            font-size: 16px;
+            padding: 5px;
+            border: 2px solid #fff;
+            border-radius: 5px;
+            background-color: rgba(255, 255, 255, 0.8);
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            text-align: center;
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div id="gameContainer">
         <canvas id="gameCanvas" width="288" height="512"></canvas>
+        <input type="text" id="playerNameInput" placeholder="Enter your name">
     </div>
     <script src="game.js"></script>
 </body>
