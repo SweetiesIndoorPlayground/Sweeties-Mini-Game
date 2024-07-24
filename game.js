@@ -1,6 +1,7 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 const playerNameInput = document.getElementById('playerNameInput');
+const gameLogo = document.getElementById('gameLogo');
 
 let birdImg, pipeImg, bgImg;
 let birdWidth, birdHeight;
@@ -91,13 +92,15 @@ function loadImage(src) {
 Promise.all([
     loadImage('bird.png'),
     loadImage('pipe.png'),
-    loadImage('background.png')
-]).then(([birdImage, pipeImage, bgImage]) => {
+    loadImage('background.png'),
+    loadImage('logo.png')
+]).then(([birdImage, pipeImage, bgImage, logoImage]) => {
     birdImg = birdImage;
     birdWidth = birdImage.width;
     birdHeight = birdImage.height;
     pipeImg = pipeImage;
     bgImg = bgImage;
+    gameLogo.src = logoImage.src;
     
     bird.width = birdWidth * BIRD_SCALE;
     bird.height = birdHeight * BIRD_SCALE;
@@ -112,6 +115,7 @@ function startGame() {
     console.log('Starting game');
     playerName = playerNameInput.value.trim() || 'Player';
     playerNameInput.style.display = 'none';
+    gameLogo.style.display = 'none';
     resetGame();
     gameStarted = true;
     isEnteringName = false;
@@ -125,6 +129,7 @@ function restartGame() {
     playerName = '';
     playerNameInput.value = '';
     playerNameInput.style.display = 'block';
+    gameLogo.style.display = 'block';
 }
 
 function resetGame() {
@@ -247,15 +252,17 @@ function drawNameInput() {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+    gameLogo.style.display = 'block';
+
     ctx.fillStyle = 'white';
     ctx.font = '20px Arial';
     ctx.textAlign = 'center';
-    ctx.fillText('Enter Your Name:', canvas.width / 2, canvas.height / 2 - 40);
+    ctx.fillText('Enter Your Name:', canvas.width / 2, canvas.height * 0.7);
     
     playerNameInput.style.display = 'block';
     
     ctx.font = '16px Arial';
-    ctx.fillText('Touch outside input to start', canvas.width / 2, canvas.height / 2 + 40);
+    ctx.fillText('Touch outside input to start', canvas.width / 2, canvas.height * 0.85);
 }
 
 function drawGameOver() {
