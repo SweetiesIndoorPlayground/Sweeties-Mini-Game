@@ -38,10 +38,19 @@
             background-color: rgba(255, 255, 255, 0.8);
             position: absolute;
             left: 50%;
-            top: 50%;
+            top: 60%;
             transform: translate(-50%, -50%);
             width: 200px;
             text-align: center;
+            display: none;
+        }
+        #gameLogo {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 80%;
+            max-height: 30%;
             display: none;
         }
     </style>
@@ -49,6 +58,7 @@
 <body>
     <div id="gameContainer">
         <canvas id="gameCanvas" width="288" height="512"></canvas>
+        <img id="gameLogo" src="logo.png" alt="Game Logo">
         <input type="text" id="playerNameInput" placeholder="Enter your name">
     </div>
     <script src="game.js"></script>
