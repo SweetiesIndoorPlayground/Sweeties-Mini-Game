@@ -33,6 +33,9 @@ let difficulty = 1;
 let audioContext;
 let jumpBuffer, scoreBuffer, gameOverBuffer;
 
+let lastJumpTime = 0;
+const JUMP_COOLDOWN = 300; // milliseconds
+
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 console.log('Running on iOS:', isIOS);
 
@@ -275,9 +278,11 @@ function drawGameOver() {
 }
 
 function jump() {
-    if (gameOver || isEnteringName) return;
+    const now = Date.now();
+    if (gameOver || isEnteringName || now - lastJumpTime < JUMP_COOLDOWN) return;
     bird.velocity = bird.jump;
     playSound(jumpBuffer);
+    lastJumpTime = now;
 }
 
 function endGame() {
@@ -301,7 +306,6 @@ function handleTouch(event) {
 }
 
 canvas.addEventListener('touchstart', handleTouch, {passive: false});
-canvas.addEventListener('touchend', handleTouch, {passive: false});
 
 function resizeCanvas() {
     const container = document.getElementById('gameContainer');
