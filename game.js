@@ -3,7 +3,6 @@ const ctx = canvas.getContext('2d');
 const playerNameInput = document.getElementById('playerNameInput');
 
 let birdImg, pipeImg, bgImg;
-let jumpSound, scoreSound, gameOverSound;
 let birdWidth, birdHeight;
 let playerName = '';
 
@@ -31,50 +30,83 @@ let pipeGap = INITIAL_PIPE_GAP;
 let pipeSpeed = INITIAL_PIPE_SPEED;
 let difficulty = 1;
 
+let audioContext;
+let jumpBuffer, scoreBuffer, gameOverBuffer;
+
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+console.log('Running on iOS:', isIOS);
+
+function initAudio() {
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function loadSound(url) {
+        return fetch(url)
+            .then(response => response.arrayBuffer())
+            .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer));
+    }
+
+    Promise.all([
+        loadSound('jump.mp3'),
+        loadSound('score.mp3'),
+        loadSound('gameover.mp3')
+    ]).then(([jump, score, gameOver]) => {
+        jumpBuffer = jump;
+        scoreBuffer = score;
+        gameOverBuffer = gameOver;
+    }).catch(error => console.error('Error loading audio:', error));
+}
+
+function playSound(buffer) {
+    if (audioContext && buffer) {
+        const source = audioContext.createBufferSource();
+        source.buffer = buffer;
+        source.connect(audioContext.destination);
+        source.start(0);
+    }
+}
+
+document.addEventListener('touchstart', function initAudioOnFirstTouch() {
+    initAudio();
+    document.removeEventListener('touchstart', initAudioOnFirstTouch);
+}, {once: true});
+
 function loadImage(src) {
     return new Promise((resolve, reject) => {
         const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = reject;
+        img.onload = () => {
+            console.log(`Image loaded: ${src}`);
+            resolve(img);
+        };
+        img.onerror = (e) => {
+            console.error(`Failed to load image: ${src}`, e);
+            reject(e);
+        };
         img.src = src;
-    });
-}
-
-function loadSound(src) {
-    return new Promise((resolve, reject) => {
-        const sound = new Audio(src);
-        sound.oncanplaythrough = () => resolve(sound);
-        sound.onerror = reject;
-        sound.src = src;
     });
 }
 
 Promise.all([
     loadImage('bird.png'),
     loadImage('pipe.png'),
-    loadImage('background.png'),
-    loadSound('jump.mp3'),
-    loadSound('score.mp3'),
-    loadSound('gameover.mp3')
-]).then(([birdImage, pipeImage, bgImage, jumpAudio, scoreAudio, gameOverAudio]) => {
+    loadImage('background.png')
+]).then(([birdImage, pipeImage, bgImage]) => {
     birdImg = birdImage;
     birdWidth = birdImage.width;
     birdHeight = birdImage.height;
     pipeImg = pipeImage;
     bgImg = bgImage;
-    jumpSound = jumpAudio;
-    scoreSound = scoreAudio;
-    gameOverSound = gameOverAudio;
     
     bird.width = birdWidth * BIRD_SCALE;
     bird.height = birdHeight * BIRD_SCALE;
     
+    console.log('All images loaded, starting game loop');
     gameLoop();
 }).catch(error => {
     console.error("Error loading game assets:", error);
 });
 
 function startGame() {
+    console.log('Starting game');
     playerName = playerNameInput.value.trim() || 'Player';
     playerNameInput.style.display = 'none';
     resetGame();
@@ -83,6 +115,7 @@ function startGame() {
 }
 
 function restartGame() {
+    console.log('Restarting game');
     resetGame();
     gameStarted = false;
     isEnteringName = true;
@@ -92,6 +125,7 @@ function restartGame() {
 }
 
 function resetGame() {
+    console.log('Resetting game');
     bird.y = canvas.height / 2 - bird.height / 2;
     bird.velocity = 0;
     pipes = [];
@@ -104,9 +138,11 @@ function resetGame() {
 }
 
 function gameLoop() {
+    console.log('Game loop starting');
     update();
     draw();
     requestAnimationFrame(gameLoop);
+    console.log('Game loop completed');
 }
 
 function update() {
@@ -145,7 +181,7 @@ function update() {
         if (pipe.x + pipe.width < bird.x && !pipe.passed) {
             pipe.passed = true;
             score++;
-            scoreSound.play();
+            playSound(scoreBuffer);
             
             if (score % 5 === 0) {
                 increaseDifficulty();
@@ -167,6 +203,7 @@ function update() {
 }
 
 function increaseDifficulty() {
+    console.log('Increasing difficulty');
     difficulty++;
     pipeSpeed += 0.5;
     pipeGap = Math.max(INITIAL_PIPE_GAP - (difficulty - 1) * 5, 70);
@@ -240,28 +277,18 @@ function drawGameOver() {
 function jump() {
     if (gameOver || isEnteringName) return;
     bird.velocity = bird.jump;
-    jumpSound.play();
+    playSound(jumpBuffer);
 }
 
 function endGame() {
     if (frames < 10) return;
+    console.log('Game over');
     gameOver = true;
-    gameOverSound.play();
+    playSound(gameOverBuffer);
 }
 
-function getTouchPos(canvas, evt) {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    return {
-        x: (evt.touches[0].clientX - rect.left) * scaleX,
-        y: (evt.touches[0].clientY - rect.top) * scaleY
-    };
-}
-
-canvas.addEventListener('touchstart', event => {
+function handleTouch(event) {
     event.preventDefault();
-    const touchPos = getTouchPos(canvas, event);
     if (isEnteringName) {
         if (event.target !== playerNameInput) {
             startGame();
@@ -271,7 +298,10 @@ canvas.addEventListener('touchstart', event => {
     } else {
         jump();
     }
-});
+}
+
+canvas.addEventListener('touchstart', handleTouch, {passive: false});
+canvas.addEventListener('touchend', handleTouch, {passive: false});
 
 function resizeCanvas() {
     const container = document.getElementById('gameContainer');
@@ -299,3 +329,9 @@ document.addEventListener('touchend', function (event) {
     }
     lastTouchEnd = now;
 }, false);
+
+window.onerror = function(message, source, lineno, colno, error) {
+    console.error('Unhandled error:', message, source, lineno, colno, error);
+};
+
+console.log('Game script loaded');
