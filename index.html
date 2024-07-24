@@ -2,32 +2,35 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Flappy Bird Clone</title>
     <style>
-        /* 保持原有的样式 */
-        /* ... */
-        input {
-            margin: 10px 0;
-            padding: 5px;
-            font-size: 16px;
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            max-height: 100vh;
+        }
+        #gameCanvas {
+            width: 100%;
+            height: auto;
+            display: block;
         }
     </style>
 </head>
 <body>
     <div id="gameContainer">
         <canvas id="gameCanvas" width="288" height="512"></canvas>
-        <div id="startScreen">
-            <h1>Flappy Bird Clone</h1>
-            <input type="text" id="playerName" placeholder="Enter your name">
-            <button id="startButton">Start Game</button>
-        </div>
-        <div id="gameOverScreen">
-            <h2>Game Over</h2>
-            <p>Player: <span id="finalPlayerName"></span></p>
-            <p>Score: <span id="finalScore"></span></p>
-            <button id="restartButton">Restart</button>
-        </div>
     </div>
     <script src="game.js"></script>
 </body>
