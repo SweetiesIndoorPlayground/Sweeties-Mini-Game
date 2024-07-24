@@ -1,5 +1,6 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+const playerNameInput = document.getElementById('playerNameInput');
 
 let birdImg, pipeImg, bgImg;
 let jumpSound, scoreSound, gameOverSound;
@@ -74,6 +75,8 @@ Promise.all([
 });
 
 function startGame() {
+    playerName = playerNameInput.value.trim() || 'Player';
+    playerNameInput.style.display = 'none';
     resetGame();
     gameStarted = true;
     isEnteringName = false;
@@ -84,6 +87,8 @@ function restartGame() {
     gameStarted = false;
     isEnteringName = true;
     playerName = '';
+    playerNameInput.value = '';
+    playerNameInput.style.display = 'block';
 }
 
 function resetGame() {
@@ -207,11 +212,10 @@ function drawNameInput() {
     ctx.textAlign = 'center';
     ctx.fillText('Enter Your Name:', canvas.width / 2, canvas.height / 2 - 40);
     
-    const displayName = playerName.length > 15 ? playerName.slice(0, 15) + '...' : playerName;
-    ctx.fillText(displayName + '|', canvas.width / 2, canvas.height / 2);
+    playerNameInput.style.display = 'block';
     
     ctx.font = '16px Arial';
-    ctx.fillText('Touch to start', canvas.width / 2, canvas.height / 2 + 40);
+    ctx.fillText('Touch outside input to start', canvas.width / 2, canvas.height / 2 + 40);
 }
 
 function drawGameOver() {
@@ -259,7 +263,9 @@ canvas.addEventListener('touchstart', event => {
     event.preventDefault();
     const touchPos = getTouchPos(canvas, event);
     if (isEnteringName) {
-        startGame();
+        if (event.target !== playerNameInput) {
+            startGame();
+        }
     } else if (gameOver) {
         restartGame();
     } else {
