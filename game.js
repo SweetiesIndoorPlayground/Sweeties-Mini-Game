@@ -1,9 +1,5 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-const startScreen = document.getElementById('startScreen');
-const startButton = document.getElementById('startButton');
-const gameOverScreen = document.getElementById('gameOverScreen');
-const restartButton = document.getElementById('restartButton');
 
 let birdImg, pipeImg, bgImg;
 let jumpSound, scoreSound, gameOverSound;
@@ -34,7 +30,6 @@ let pipeGap = INITIAL_PIPE_GAP;
 let pipeSpeed = INITIAL_PIPE_SPEED;
 let difficulty = 1;
 
-// 资源加载函数保持不变
 function loadImage(src) {
     return new Promise((resolve, reject) => {
         const img = new Image();
@@ -72,9 +67,6 @@ Promise.all([
     
     bird.width = birdWidth * BIRD_SCALE;
     bird.height = birdHeight * BIRD_SCALE;
-
-    startScreen.style.display = 'none';
-    gameOverScreen.style.display = 'none';
     
     gameLoop();
 }).catch(error => {
@@ -150,7 +142,6 @@ function update() {
             score++;
             scoreSound.play();
             
-            // 每得到5分增加难度
             if (score % 5 === 0) {
                 increaseDifficulty();
             }
@@ -220,7 +211,7 @@ function drawNameInput() {
     ctx.fillText(displayName + '|', canvas.width / 2, canvas.height / 2);
     
     ctx.font = '16px Arial';
-    ctx.fillText('Press Enter to start', canvas.width / 2, canvas.height / 2 + 40);
+    ctx.fillText('Touch to start', canvas.width / 2, canvas.height / 2 + 40);
 }
 
 function drawGameOver() {
@@ -239,7 +230,7 @@ function drawGameOver() {
     ctx.fillText(`Difficulty: ${difficulty}`, canvas.width / 2, canvas.height / 2 + 50);
     
     ctx.font = '16px Arial';
-    ctx.fillText('Press Space to restart', canvas.width / 2, canvas.height / 2 + 90);
+    ctx.fillText('Touch to restart', canvas.width / 2, canvas.height / 2 + 90);
 }
 
 function jump() {
@@ -254,29 +245,51 @@ function endGame() {
     gameOverSound.play();
 }
 
-document.addEventListener('keydown', event => {
-    if (isEnteringName) {
-        if (event.key === 'Enter' && playerName.trim() !== '') {
-            startGame();
-        } else if (event.key === 'Backspace') {
-            playerName = playerName.slice(0, -1);
-        } else if (event.key.length === 1 && playerName.length < 15) {
-            playerName += event.key;
-        }
-    } else if (event.code === 'Space') {
-        if (gameOver) {
-            restartGame();
-        } else {
-            jump();
-        }
-    }
-});
+function getTouchPos(canvas, evt) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+        x: (evt.touches[0].clientX - rect.left) * scaleX,
+        y: (evt.touches[0].clientY - rect.top) * scaleY
+    };
+}
 
 canvas.addEventListener('touchstart', event => {
     event.preventDefault();
-    if (isEnteringName || gameOver) {
+    const touchPos = getTouchPos(canvas, event);
+    if (isEnteringName) {
+        startGame();
+    } else if (gameOver) {
         restartGame();
     } else {
         jump();
     }
 });
+
+function resizeCanvas() {
+    const container = document.getElementById('gameContainer');
+    const canvas = document.getElementById('gameCanvas');
+    const aspectRatio = canvas.width / canvas.height;
+    const newWidth = container.clientWidth;
+    const newHeight = newWidth / aspectRatio;
+    
+    canvas.style.width = `${newWidth}px`;
+    canvas.style.height = `${newHeight}px`;
+}
+
+window.addEventListener('load', resizeCanvas);
+window.addEventListener('resize', resizeCanvas);
+
+document.body.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+}, { passive: false });
+
+let lastTouchEnd = 0;
+document.addEventListener('touchend', function (event) {
+    const now = (new Date()).getTime();
+    if (now - lastTouchEnd <= 300) {
+        event.preventDefault();
+    }
+    lastTouchEnd = now;
+}, false);
